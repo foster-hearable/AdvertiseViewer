@@ -1,0 +1,321 @@
+<!doctype html>
+<!--
+Copyright 2023 Foster Electric Co., Ltd.
+Released under the MIT license
+-->
+<html>
+  <style>
+    .flex {
+        display: -webkit-flex;
+        display: -moz-flex;
+        display: -ms-flex;
+        display: -o-flex;
+        display: flex;
+        gap: 6px 6px;
+    }    
+    .flex p{
+        display: -webkit-flex;
+        display: -moz-flex;
+        display: -ms-flex;
+        display: -o-flex;
+        display: flex;
+        gap: 6px 6px;
+        flex-direction: column;
+    }
+    .toast {
+        position: fixed;
+        z-index: 9999;
+        display: flex;
+        top: -140px;
+        left: 50%;
+        transform: translate(-50%, 0);
+        width: 100%;
+        max-width: 600px;
+        padding: 20px 25px;
+        border-radius: 5px;
+        background: rgb(189,185,255);
+        background: linear-gradient(90deg, rgba(189,185,255,1) 0%, rgba(103,184,255,1) 100%);
+        align-items: center;
+        justify-content: flex-start;
+        gap: 20px;
+        filter: drop-shadow(0px 2px 8px #ddd);
+        transition: 0.8s ease-in-out;
+    }
+    .toast.show{
+        top: 300px;
+        transition: 0.1s linear;
+    }
+  </style>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Foster Hearable">
+    <meta name="viewport" content="width=640, maximum-scale=1.0, user-scalable=yes">
+    <title>Foster Hearable</title>
+    <link rel="stylesheet" href="./components/simple.css"> 
+  </head>
+
+<body>
+<div class="container">
+    <h1>Foster Hearable</h1>
+    <p>Advertise Viewer</p>
+
+    <div>
+        <table>
+            <tr>
+                <th>Device Name</th>
+                <td><label id="adv_device_name">None</td>
+            </tr>
+            <tr>
+                <th>Device ID</th>
+                <td><label id="adv_device_id">None</td>
+            </tr>
+            <tr>
+                <th>RSSI</th>
+                <td><label id="adv_rssi">None</td>
+            </tr>
+            <tr>
+                <th>TX Power</th>
+                <td><label id="adv_txPower">None</td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <th>Product</th>
+                <td><label id="mDataProd">None</td>
+            </tr>
+                <th>State</th>
+                <td><label id="mDataState">None</td>
+            </tr>
+                <th>Temperature</th>
+                <td><label id="mDataTemp">None</td>
+            </tr>
+                <th>Activity</th>
+                <td><label id="mDataActiv">None</td>
+            </tr>
+                <th>Heart Rate</th>
+                <td><label id="mDataHR">None</td>
+            </tr>
+                <th>Step count</th>
+                <td><label id="mDataStep">None</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="flex" >
+        <button id="startScan" class="button">Start Scanning</button>
+        <button id="stopScan" class="button">Stop Scanning</button>
+    </div>
+    <br/>
+        <div class="flex" >
+        <label>WebSocket URL : <input type="text" id="ws_url" size="40" value="ws://127.0.0.1:6301"></label>
+        <button id="WebSocket" class="button">Connect</button>    
+    </div>
+    <div class="code"><pre>
+    <span id="device_name"> </span>
+    <span id="uuid_name"> </span>
+    <span id="status"> </span></pre>
+    </div>
+    <hr>
+    <div class="footer">
+        For more information, see <a href="https://github.com/foster-hearable/EarSurfaceTemperature" target="_blank">GitHub</a> !
+    </div>
+    <div id="topToast" class="toast">Collapse Detected!!</div>
+</div>
+
+    
+<script type="text/javascript" src="./components/bluejelly.js"></script>
+<script>
+    //--------------------------------------------------
+    //Globals
+    //--------------------------------------------------
+    gStatus   = 0
+    var flgStatus = {
+        'WEAR'  : 1<<0,
+        'TOUCH' : 1<<1,
+        'OPENED': 1<<7,
+    }
+    gScanningDevice = NaN;
+    gAbortCtrl      = NaN;
+    gTimeoutID      = 0;
+    
+</script>
+
+<script>
+    robin_open = function() {
+        console.log('Requesting any Bluetooth device...');
+        navigator.bluetooth.requestDevice({
+            filters: [
+                {namePrefix: "LE-RN"},
+            ],
+            optionalManufacturerData: [0x0230],
+            optionalServices: [0x180D, 0xFD92],
+        })
+        .then(device => {
+            console.log('> Requested ' + device.name);
+            //console.log(device)
+            gScanningDevice = device
+            gAbortCtrl      = new AbortController();
+
+            device.addEventListener('advertisementreceived', (event) => {
+                console.log('Advertisement received.');
+                //console.log(event)
+                //document.getElementById('device_name').innerHTML = "";
+                //document.getElementById('uuid_name').innerHTML = "";
+                //document.getElementById('status').innerHTML = "";
+
+                document.getElementById('adv_device_name').innerHTML = event.device.name;
+                document.getElementById('adv_device_id').innerHTML   = event.device.id;
+                document.getElementById('adv_rssi').innerHTML        = event.rssi;
+                document.getElementById('adv_txPower').innerHTML    = event.txPower;
+
+                event.manufacturerData.forEach((valueDataView, key) => {
+                    mData = [...new Uint8Array(valueDataView.buffer)]
+                    //console.log(mData)
+
+                    document.getElementById('device_name').innerHTML = event.device.name;
+                    document.getElementById('uuid_name').innerHTML = "0x0230";
+                    document.getElementById('status').innerHTML = mData.map(b => b.toString(16).padStart(2,'0')).join(' ');
+
+                    var str = ""
+                    if(mData[0] & 0x80) str += "EAA "
+                    if(mData[0] & 0x02) str += "RN2.2 "
+                    if(mData[0] & 0x01) str += "RN002 "
+                    document.getElementById('mDataProd').innerHTML = str;
+
+                    var str = ""
+                    if(mData[1] & 0x01){str += "Right, "    }else{str += "Left, "      }
+                    if(mData[1] & 0x02){str += "Stereo, "   }else{str += "Mono, "      }
+                    if(mData[1] & 0x04) str += "Connected, "
+                    if(mData[1] & 0x08){str += "In-Ear, "   }else{str += "Out-Ear, "   }
+                    if(mData[1] & 0x10) str += "Low Batt, "
+                    if(mData[1] & 0x20) str += "In-Call, "
+                    document.getElementById('mDataState').innerHTML = str;
+                    
+                    var tmp = (mData[3]*0x100 + mData[2])/10.0
+                    document.getElementById('mDataTemp').innerHTML = tmp.toFixed(1);
+
+                    var str = "None"
+                    if(mData[4] == 0x01) str = "Stay"
+                    if(mData[4] == 0x02) str = "Walk"
+                    if(mData[4] == 0x03) str = "Run"
+                    if(mData[4] == 0x04) str = "Collapse"
+                    //------------------------
+                    if ((mData[4] == 0x04) && !document.getElementById('mDataActiv').innerHTML.includes('Collapse')){
+                        const toast = document.getElementById("topToast")
+                        //console.log(toast, toast.className)
+
+                        if (gTimeoutID == 0) {
+                            toast.className = toast.className.replace("toast", "toast show")
+                            
+                            gTimeoutID = setTimeout( function(){
+                                gTimeoutID = 0
+                                toast.className = toast.className.replace("toast show", "toast")
+                            }, 1000);
+                        }
+                    }
+                    //------------------------
+                    document.getElementById('mDataActiv').innerHTML = str;
+
+                    var tmp = mData[5]
+                    document.getElementById('mDataHR').innerHTML = tmp;
+
+                    var tmp = (mData[10]*0x100 + mData[9])
+                    document.getElementById('mDataStep').innerHTML = tmp;
+
+
+                });
+            });
+
+            console.log('Watching advertisements from "' + device.name + '"...');
+            return device.watchAdvertisements({signal:gAbortCtrl.signal});
+        })
+        .catch(error => {
+            console.log('Error! ' + error);
+        });
+    }
+
+    robin_init = function() {
+        /* */
+    }
+
+    robin_close = function() {
+        gAbortCtrl.abort();
+    }
+
+</script>
+
+<script>
+    //--------------------------------------------------
+    //WebSocket
+    //--------------------------------------------------
+    let wsurl_element = document.getElementById('ws_url');
+    let sock = null
+
+    ws_refresh = function() {
+        if (wsurl_element.disabled) {
+            console.log('WebSocket: Close.');        
+            sock.close()
+        } else {
+            console.log('WebSocket: Reconnect.');        
+            sock = new WebSocket(wsurl_element.value);
+
+            sock.addEventListener('open',function(e){
+                console.log('WebSocket: Connected.');
+                document.getElementById('WebSocket').textContent = "Disconnect"
+                wsurl_element.disabled = true
+
+                window.setInterval(function(){
+                    if ((gStatus & flgStatus.OPENED) && (wsurl_element.disabled)) {
+                        if (gTempTi > 0) {
+                            d = [gTempTb*10, gTempK*1000, gTempTi*10, gTempTo*10]
+                            sock.send(d);
+//                            console.log(d)
+                        }
+                    }
+                }, 1000);
+            });
+            sock.onclose = () => {
+                console.log('WebSocket: Closed.');        
+                document.getElementById('WebSocket').textContent = "Connect"
+                wsurl_element.disabled = false
+            }
+            sock.onmessage = function(e) {
+                console.log(e.data)
+            }
+        }
+    }
+    ws_refresh()
+
+    //--------------------------------------------------
+    // Onload setups and Buttons
+    //--------------------------------------------------
+    window.onload = function () {
+        robin_init();
+        
+        document.getElementById("startScan").disabled = false;
+        document.getElementById("stopScan").disabled  = true;
+    }
+
+    document.getElementById('startScan').addEventListener('click', function(e) {
+        robin_open();
+
+        document.getElementById("startScan").disabled = true;
+        document.getElementById("stopScan").disabled  = false;
+    });
+
+    document.getElementById('stopScan').addEventListener('click', function() {
+        robin_close();
+
+        document.getElementById("startScan").disabled = false;
+        document.getElementById("stopScan").disabled  = true;
+    });
+
+    document.getElementById('WebSocket').addEventListener('click', function(e) {
+        ws_refresh();
+    });
+</script>
+
+
+</body>
+</html>
