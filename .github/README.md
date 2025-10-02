@@ -2,23 +2,33 @@
 ---
 ## Overview
 Hearable Advatise Viewerはヒアラブルデバイス（フォスター電機 RN002）に実装されているアドバタイズ機能で通知されるデータを表示するためのフロントエンドアプリケーションです。\
-★ デモ用Webサイト [https://foster-hearable.github.io/Multi-App/](https://foster-hearable.github.io/Multi-App/)
+★ デモ用Webサイト [https://foster-hearable.github.io/AdvertiseViewer/](https://foster-hearable.github.io/AdvertiseViewer/)
 
 WebBluetoothを用いてヒアラブルデバイスRN002のアドバタイズをサーチし、各センシングデータの表示やWebSocketサーバーへのデータ送出を行います。\
 WebSocketのデータはIMUの値およびフィルタにより補正した加速度、基準位置からの回転量を示す角度データで構成されているため、WebSocketサーバー側での加工や解析に用いることができます。
 
 ## 対応ブラウザ
-WebBluetoothに対応したブラウザ　参考：[ブラウザー互換性一覧表 Mozilla.org](https://developer.mozilla.org/ja/docs/Web/API/Web_Bluetooth_API#ブラウザーの互換性)
-※OSやバージョンによっては、対応ブラウザであっても動作しない場合があります
+WebBluetoothに対応したブラウザ\
+　参考：[ブラウザー互換性一覧表 Mozilla.org]\
+　https://developer.mozilla.org/ja/docs/Web/API/Web_Bluetooth_API#ブラウザーの互換性)
+\
+\
+　※OSやバージョンによっては、対応ブラウザであっても動作しない場合があります
 
 #### 動作することを確認しているブラウザ
 - Chrome（Windows,Android）
 - Edge（Windows）
+
+\
+※上記のいずれにおいてもchrome://flags#enable-experimental-web-platform-featuresを有効に切り替える必要があります
   
 #### 動作しないことを確認しているブラウザ
 - Safari（Mac,iOS）
 - Chrome (Mac, iOS)
 - Edge (Mac)
+
+\
+※Macで実行した場合は、継続的なアドバタイズのデータ受信が行えませんのでご注意ください
 
 ## 操作インターフェース
 <img src="Panel.png" width="450">
