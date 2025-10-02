@@ -138,6 +138,7 @@ Released under the MIT license
     gScanningDevice = NaN;
     gAbortCtrl      = NaN;
     gTimeoutID      = 0;
+    gData           = [];
     
 </script>
 
@@ -172,6 +173,10 @@ Released under the MIT license
                 event.manufacturerData.forEach((valueDataView, key) => {
                     mData = [...new Uint8Array(valueDataView.buffer)]
                     //console.log(mData)
+                    if (gData.length == 0){
+                        gData = [...mData]
+                        //console.log(gData)
+                    }
 
                     document.getElementById('device_name').innerHTML = event.device.name;
                     document.getElementById('uuid_name').innerHTML = "0x0230";
@@ -266,12 +271,11 @@ Released under the MIT license
                 wsurl_element.disabled = true
 
                 window.setInterval(function(){
-                    if ((gStatus & flgStatus.OPENED) && (wsurl_element.disabled)) {
-                        if (gTempTi > 0) {
-                            d = [gTempTb*10, gTempK*1000, gTempTi*10, gTempTo*10]
-                            sock.send(d);
-//                            console.log(d)
-                        }
+                    if ((gData.length > 0) && (wsurl_element.disabled)) {
+                        d = [...gData]
+                        sock.send(d)
+
+                        gData = []
                     }
                 }, 1000);
             });
