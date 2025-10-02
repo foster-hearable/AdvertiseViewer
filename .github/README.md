@@ -1,23 +1,24 @@
-# Hearable Multi-App
+# Hearable Advertise Viewer
 ---
 ## Overview
-Hearable Multi-Appはヒアラブルデバイス（フォスター電機 RN002）に実装されているセンシング機能の取得データを表示するためのフロントエンドアプリケーションです。\
+Hearable Advatise Viewerはヒアラブルデバイス（フォスター電機 RN002）に実装されているアドバタイズ機能で通知されるデータを表示するためのフロントエンドアプリケーションです。\
 ★ デモ用Webサイト [https://foster-hearable.github.io/Multi-App/](https://foster-hearable.github.io/Multi-App/)
 
-WebBluetoothを用いてヒアラブルデバイスRN002からデータ取得を行い、各センシングデータの表示やWebSocketサーバーへのデータ送出を行います。\
+WebBluetoothを用いてヒアラブルデバイスRN002のアドバタイズをサーチし、各センシングデータの表示やWebSocketサーバーへのデータ送出を行います。\
 WebSocketのデータはIMUの値およびフィルタにより補正した加速度、基準位置からの回転量を示す角度データで構成されているため、WebSocketサーバー側での加工や解析に用いることができます。
 
 ## 対応ブラウザ
 WebBluetoothに対応したブラウザ　参考：[ブラウザー互換性一覧表 Mozilla.org](https://developer.mozilla.org/ja/docs/Web/API/Web_Bluetooth_API#ブラウザーの互換性)
+※OSやバージョンによっては、対応ブラウザであっても動作しない場合があります
 
 #### 動作することを確認しているブラウザ
-- Chrome（Windows,Mac,Android）
-- Edge（Windows,Mac）
+- Chrome（Windows,Android）
+- Edge（Windows）
   
 #### 動作しないことを確認しているブラウザ
 - Safari（Mac,iOS）
-- Chrome (iOS)
-
+- Chrome (Mac, iOS)
+- Edge (Mac)
 
 ## 操作インターフェース
 <img src="Panel.png" width="450">
